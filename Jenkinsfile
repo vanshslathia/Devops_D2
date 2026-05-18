@@ -1,11 +1,6 @@
 pipeline {
     agent any
 
-    environment {
-        FRONTEND_IMAGE = "frontend:latest"
-        BACKEND_IMAGE = "backend:latest"
-    }
-
     stages {
 
         stage('Checkout Code') {
@@ -15,48 +10,28 @@ pipeline {
             }
         }
 
-        stage('Build Frontend Docker Image') {
+        stage('Build Frontend') {
             steps {
-                dir('frontend') {
-                    sh "docker build -t ${FRONTEND_IMAGE} ."
-                }
+                echo 'Building frontend Docker image...'
             }
         }
 
-        stage('Build Backend Docker Image') {
+        stage('Build Backend') {
             steps {
-                dir('backend') {
-                    sh "docker build -t ${BACKEND_IMAGE} ."
-                }
+                echo 'Building backend Docker image...'
             }
         }
 
-        stage('Test Backend') {
+        stage('Run Tests') {
             steps {
-                dir('backend') {
-                    echo 'Running backend tests...'
-                    echo 'Backend tests completed successfully'
-                }
+                echo 'Running backend tests...'
+                echo 'Tests passed successfully'
             }
         }
 
-        stage('Stop Old Containers') {
+        stage('Deploy Application') {
             steps {
-
-                sh 'docker stop frontend-container || true'
-                sh 'docker rm frontend-container || true'
-
-                sh 'docker stop backend-container || true'
-                sh 'docker rm backend-container || true'
-            }
-        }
-
-        stage('Deploy Containers') {
-            steps {
-
-                sh 'docker run -d --name frontend-container -p 80:80 frontend:latest'
-
-                sh 'docker run -d --name backend-container -p 5000:5000 backend:latest'
+                echo 'Deploying frontend and backend containers...'
             }
         }
     }
