@@ -1,111 +1,317 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DaudCloud-Sudo: DevOps Mastery</title>
+    <title>TechStore - Premium Tech Shopping</title>
     <link rel="stylesheet" href="style.css" />
-  </head>
-  <body>
-    <header>
-      <h1>Welcome to My DevOps Journey</h1>
-      <p>
-        I am DaudCloud-Sudo AKA Shahzaib Daud, passionate about mastering DevOps
-        through hands-on projects and real-world experience.
-      </p>
-    </header>
-    <p class="title">
-      <strong>Project Title:</strong> Microservices CI/CD Pipeline with Jenkins,
-      GitHub, and Docker.
-    </p>
-    <p class="outcome">
-      <strong>Outcome:</strong> This project fetches data from a backend service
-      and displays it on the frontend, showcasing the seamless integration of
-      various microservices. The project is implemented using a combination of
-      industry-standard tools including Git, GitHub, VS Code, Docker, Jenkins,
-      and microservices architecture to achieve continuous integration,
-      continuous delivery, and automated deployment. <br /><strong
-        >Click on Fetch data to retrieve the data from backend server under the
-        current focus menu.</strong
-      >
-    </p>
-
-    <section>
-      <h2>Current Focus</h2>
-      <div class="focus-container">
-        <div class="focus-item">
-          <h3>CI/CD with Jenkins</h3>
-          <p>
-            Implementing robust CI/CD pipelines with Jenkins and GitHub for
-            automated testing, versioning, and deployment.
-          </p>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="logo-section">
+                <i class="fas fa-shopping-bag"></i>
+                <h1 class="logo">TechStore</h1>
+            </div>
+            <div class="nav-right">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Search products..." />
+                    <i class="fas fa-search"></i>
+                </div>
+                <button class="nav-btn" id="wishlistBtn" title="Wishlist">
+                    <i class="fas fa-heart"></i>
+                    <span id="wishlistCount">0</span>
+                </button>
+                <button class="nav-btn" id="orderHistoryBtn" title="Order History">
+                    <i class="fas fa-history"></i>
+                </button>
+                <button class="cart-btn" id="cartBtn">
+                    <i class="fas fa-shopping-cart"></i>
+                    Cart (<span id="cartCount">0</span>)
+                </button>
+            </div>
         </div>
-        <div class="focus-item">
-          <h3>Microservices Architecture</h3>
-          <p>
-            Designing and deploying multi-tier microservices using Docker and
-            Kubernetes for scalability and resilience.
-          </p>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h2>Welcome to TechStore</h2>
+            <p>Premium Technology Products at Unbeatable Prices</p>
+            <button class="cta-btn" onclick="document.getElementById('productsGrid').scrollIntoView({behavior: 'smooth'})">
+                Shop Now <i class="fas fa-arrow-right"></i>
+            </button>
         </div>
-        <div class="focus-item">
-          <h3>Advanced DevOps Practices</h3>
-          <p>
-            Exploring Infrastructure as Code (IaC), cloud deployments on AWS,
-            and monitoring with Prometheus and Grafana.
-          </p>
+        <div class="hero-background"></div>
+    </section>
+
+    <!-- Products Section -->
+    <section class="products-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>Our Products</h2>
+                <p>Discover Our Exclusive Collection of Tech Products</p>
+            </div>
+
+            <!-- Filters & Sorting -->
+            <div class="filters-wrapper">
+                <div class="filters-left">
+                    <div class="filter-container">
+                        <button class="filter-btn active" data-category="all">
+                            <i class="fas fa-th"></i> All Products
+                        </button>
+                        <button class="filter-btn" data-category="Electronics">
+                            <i class="fas fa-laptop"></i> Electronics
+                        </button>
+                        <button class="filter-btn" data-category="Accessories">
+                            <i class="fas fa-keyboard"></i> Accessories
+                        </button>
+                    </div>
+                </div>
+
+                <div class="filters-right">
+                    <div class="price-filter">
+                        <label>Price Range:</label>
+                        <input type="range" id="priceRange" min="0" max="1500" value="1500" step="10" />
+                        <span id="priceValue">₹0 - ₹1500</span>
+                    </div>
+
+                    <div class="sort-filter">
+                        <select id="sortBy">
+                            <option value="">Sort By</option>
+                            <option value="price-low">Price: Low to High</option>
+                            <option value="price-high">Price: High to Low</option>
+                            <option value="name-asc">Name: A to Z</option>
+                            <option value="name-desc">Name: Z to A</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Products Grid -->
+            <div class="products-grid" id="productsGrid">
+                <!-- Products will be loaded here -->
+            </div>
+
+            <!-- No Products Message -->
+            <div id="noProducts" class="no-products" style="display: none;">
+                <i class="fas fa-search"></i>
+                <p>No products found</p>
+            </div>
         </div>
-      </div>
     </section>
 
-    <section>
-      <h2>Interactive Exploration</h2>
-      <p>Click the button below to interact with the backend services.</p>
-      <button id="fetchDataBtn">Fetch Data from Backend</button>
-      <div id="data"></div>
-    </section>
+    <!-- Product Detail Modal -->
+    <div class="modal" id="productDetailModal">
+        <div class="modal-content product-detail-modal">
+            <span class="close" id="closeProductDetail">&times;</span>
+            <div class="product-detail-content">
+                <div class="detail-image">
+                    <div id="detailImageEmoji">📦</div>
+                </div>
+                <div class="detail-info">
+                    <h2 id="detailName">Product Name</h2>
+                    <span class="detail-category" id="detailCategory">Category</span>
+                    
+                    <div class="detail-rating">
+                        <div class="stars" id="detailRating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star-half-alt"></i>
+                        </div>
+                        <span id="ratingCount">(245 reviews)</span>
+                    </div>
 
-    <section>
-      <h2>Why DevOps?</h2>
-      <p>
-        DevOps represents the perfect blend of development and operations,
-        enabling faster, more reliable software delivery. My journey in DevOps
-        is driven by a passion for automating processes, optimizing workflows,
-        and achieving continuous integration and delivery at scale.
-      </p>
-    </section>
+                    <p class="detail-description" id="detailDescription">Product description</p>
+                    
+                    <div class="detail-price" id="detailPrice">$999.99</div>
+                    
+                    <div class="detail-actions">
+                        <div class="quantity-selector">
+                            <button onclick="decrementQty()">-</button>
+                            <input type="number" id="detailQty" value="1" min="1" />
+                            <button onclick="incrementQty()">+</button>
+                        </div>
+                        <button class="btn-primary" id="addDetailToCart">
+                            <i class="fas fa-shopping-cart"></i> Add to Cart
+                        </button>
+                        <button class="btn-wishlist" id="addDetailToWishlist">
+                            <i class="fas fa-heart"></i>
+                        </button>
+                    </div>
 
-    <section>
-      <h2>My Toolbox</h2>
-      <ul>
-        <li>Version Control: Git/GitHub</li>
-        <li>Build Tools: Maven, Gradle, AWS CodeBuild</li>
-        <li>CI/CD Tools: Jenkins, AWS CodePipeline, CircleCI</li>
-        <li>Test Tools: Selenium, JUnit</li>
-        <li>Containerization: Docker</li>
-        <li>Orchestration: Kubernetes</li>
-        <li>Operate: Ansible, Terraform</li>
-        <li>Cloud Platforms: AWS, AZURE</li>
-        <li>Monitoring: Prometheus, Grafana, CloudWatch</li>
-        <li>Logging: CloudTrail</li>
-      </ul>
-    </section>
+                    <div class="detail-specs">
+                        <h4>Product Specifications</h4>
+                        <ul>
+                            <li><strong>Stock:</strong> <span id="detailStock">15 in stock</span></li>
+                            <li><strong>Shipping:</strong> Free worldwide shipping</li>
+                            <li><strong>Warranty:</strong> 2 years warranty included</li>
+                            <li><strong>Returns:</strong> 30-day money-back guarantee</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <section>
-      <h2>Get in Touch</h2>
-      <p>
-        I'm always open to discussing new ideas, collaborating on projects, or
-        sharing insights on DevOps. Connect with me on
-        <a
-          href="https://www.linkedin.com/in/shahzaib-daud-computer-engineer/"
-          target="_blank"
-          >LinkedIn</a
-        >
-        or check out my
-        <a href="https://github.com/DaudCloud-sudo" target="_blank">GitHub</a>
-        to see what I'm working on.
-      </p>
-    </section>
+    <!-- Wishlist Modal -->
+    <div class="modal" id="wishlistModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-heart"></i> My Wishlist</h2>
+                <span class="close" id="closeWishlist">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="wishlistItems"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order History Modal -->
+    <div class="modal" id="orderHistoryModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-history"></i> Order History</h2>
+                <span class="close" id="closeOrderHistory">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="orderHistoryItems"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shopping Cart Modal -->
+    <div class="modal" id="cartModal">
+        <div class="modal-content cart-modal">
+            <div class="modal-header">
+                <h2><i class="fas fa-shopping-cart"></i> Shopping Cart</h2>
+                <span class="close" id="closeCart">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="cart-items" id="cartItems">
+                    <!-- Cart items will be displayed here -->
+                </div>
+            </div>
+            <div class="cart-summary">
+                <div class="coupon-input">
+                    <input type="text" id="couponCode" placeholder="Enter coupon code">
+                    <button onclick="applyCoupon()"><i class="fas fa-tag"></i> Apply</button>
+                </div>
+                <div class="summary-row">
+                    <span>Subtotal:</span>
+                    <span>₹<span id="subtotal">0.00</span></span>
+                </div>
+                <div class="summary-row" id="discountRow" style="display: none;">
+                    <span>Discount:</span>
+                    <span>-₹<span id="discountAmount">0.00</span></span>
+                </div>
+                <div class="summary-row">
+                    <span>Tax (10%):</span>
+                    <span>₹<span id="tax">0.00</span></span>
+                </div>
+                <div class="summary-row total">
+                    <span>Total:</span>
+                    <span>₹<span id="total">0.00</span></span>
+                </div>
+            </div>
+            <button class="checkout-btn" id="checkoutBtn">
+                <i class="fas fa-credit-card"></i> Proceed to Checkout
+            </button>
+        </div>
+    </div>
+
+    <!-- Checkout Modal -->
+    <div class="modal" id="checkoutModal">
+        <div class="modal-content checkout-modal">
+            <div class="modal-header">
+                <h2><i class="fas fa-clipboard-list"></i> Checkout</h2>
+                <span class="close" id="closeCheckout">&times;</span>
+            </div>
+            <form id="checkoutForm" class="modal-body">
+                <div class="form-group">
+                    <label for="email"><i class="fas fa-envelope"></i> Email Address</label>
+                    <input type="email" id="email" name="email" placeholder="your@email.com" required />
+                </div>
+                <div class="form-group">
+                    <label for="address"><i class="fas fa-map-marker-alt"></i> Shipping Address</label>
+                    <textarea id="address" name="address" rows="4" placeholder="Enter your complete address" required></textarea>
+                </div>
+
+                <!-- Order Review -->
+                <div class="order-review">
+                    <h3><i class="fas fa-receipt"></i> Order Summary</h3>
+                    <div id="orderSummary"></div>
+                    <div class="review-total">
+                        <strong>Total: ₹<span id="checkoutTotal">0.00</span></strong>
+                    </div>
+                </div>
+
+                <button type="submit" class="place-order-btn">
+                    <i class="fas fa-check-circle"></i> Place Order
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Order Confirmation Modal -->
+    <div class="modal" id="confirmationModal">
+        <div class="modal-content confirmation-modal">
+            <div class="modal-header">
+                <span class="close" id="closeConfirmation">&times;</span>
+            </div>
+            <div class="confirmation-content">
+                <div class="success-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h2>Order Placed Successfully!</h2>
+                <div id="confirmationDetails"></div>
+                <button class="continue-btn" id="continueBtn">
+                    <i class="fas fa-shopping-bag"></i> Continue Shopping
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>About TechStore</h4>
+                <p>Your trusted online store for premium technology products and accessories.</p>
+            </div>
+            <div class="footer-section">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="#products">Products</a></li>
+                    <li><a href="#about">About Us</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Newsletter</h4>
+                <form id="newsletterForm" class="newsletter-form">
+                    <input type="email" placeholder="Your email" required>
+                    <button type="submit"><i class="fas fa-paper-plane"></i></button>
+                </form>
+            </div>
+            <div class="footer-section">
+                <h4>Follow Us</h4>
+                <div class="social-links">
+                    <a href="#" title="Facebook"><i class="fab fa-facebook"></i></a>
+                    <a href="#" title="Twitter"><i class="fab fa-twitter"></i></a>
+                    <a href="#" title="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="#" title="LinkedIn"><i class="fab fa-linkedin"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 TechStore. All rights reserved.</p>
+        </div>
+    </footer>
 
     <script src="script.js"></script>
-  </body>
-</html>
+</body>

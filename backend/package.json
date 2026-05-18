@@ -1,14 +1,15 @@
 {
-  "name": "backend",
-  "version": "1.0.0",
-  "main": "index.js",
+  "name": "techstore-backend",
+  "version": "2.0.0",
+  "main": "server.js",
   "scripts": {
+    "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
+  "keywords": ["ecommerce", "api", "nodejs"],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "TechStore - Ecommerce Backend API",
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.19.2"

@@ -1,103 +1,285 @@
-# CI/CD Microservices Pipeline Using Jenkins and Docker
+# TechStore - Ecommerce Microservices Platform
 
 ## Project Description
 
-I built a CI/CD pipeline for microservices using Jenkins and Docker, separating the app into frontend and backend services. This project helped me improve my skills in Git, GitHub, Jenkins, and Docker by integrating continuous testing, versioning, and deployment.
+**TechStore** is a fully functional ecommerce platform built with microservices architecture using Node.js backend, HTML/CSS/JavaScript frontend, and deployed with Docker. This project demonstrates modern DevOps practices including containerization, CI/CD pipeline automation with Jenkins, and microservices deployment.
 
-## Outcome
+## Features
 
-I successfully:
+### Frontend
+- 🎨 Modern, responsive product catalog UI
+- 🛒 Shopping cart functionality with add/remove items
+- 🔍 Product filtering by category (Electronics, Accessories)
+- 💳 Checkout process with order summary
+- 📦 Order confirmation with order details
+- 📱 Mobile-responsive design
 
-- Initialized the Git and GitHub repo.
-- Created a CI/CD pipeline with Jenkins.
-- Dockerized microservices for deployment.
-- Linked GitHub with Jenkins for automation.
-- Developed a basic understanding of creating APIs and connecting them with the frontend.
-- Gained confidence in DevOps practices.
+### Backend API
+- **GET /api/products** - Retrieve all products
+- **GET /api/products/:id** - Get single product details
+- **GET /api/cart** - View current cart
+- **POST /api/cart** - Add items to cart
+- **DELETE /api/cart/:productId** - Remove items from cart
+- **POST /api/orders** - Place an order
+- **GET /api/orders** - View all orders
+- **GET /health** - Health check endpoint
 
-This project equipped me with essential skills and experience that will be valuable for real-world DevOps and software development environments.
+### Products Catalog
+- Laptop ($999.99)
+- Wireless Mouse ($29.99)
+- USB-C Cable ($14.99)
+- 27" Monitor ($349.99)
+- Mechanical Keyboard ($129.99)
+- HD Webcam ($79.99)
 
-### Workflow
+## Project Architecture
 
-1. Set up Git and GitHub.
-2. Build the frontend with HTML, CSS, and JavaScript.
-3. Create a Node.js API that returns JSON and connect it with the frontend.
-4. Containerize the application using Docker.
-5. Test locally: access the frontend via `localhost` and the API via `localhost:3000/data`.
-6. Automate the entire process using Jenkins.
+```
+TechStore (Microservices)
+├── Frontend Service (Port 8080)
+│   ├── HTML/CSS/JavaScript
+│   ├── Product Display
+│   └── Shopping Cart UI
+├── Backend Service (Port 3000)
+│   ├── Node.js/Express API
+│   ├── Product Management
+│   ├── Cart Management
+│   └── Order Processing
+└── DevOps Pipeline
+    ├── Docker Containerization
+    ├── Docker Compose Orchestration
+    └── Jenkins CI/CD Automation
+```
+
+## Technology Stack
+
+### Development
+- **Frontend:** HTML5, CSS3, Vanilla JavaScript
+- **Backend:** Node.js, Express.js
+- **Database:** In-memory storage (can be extended to MongoDB/PostgreSQL)
+
+### DevOps & Deployment
+- **Docker:** Container images for frontend and backend
+- **Docker Compose:** Multi-container orchestration
+- **Jenkins:** CI/CD pipeline automation
+- **Git/GitHub:** Version control and webhooks
+
+## Setup and Installation
+
+### Prerequisites
+- Docker & Docker Compose
+- Node.js (for local development)
+- Jenkins (for CI/CD pipeline)
+- Git
+
+### Local Development
+
+1. **Clone the repository**
+```bash
+git clone https://github.com/your-repo/techstore.git
+cd techstore
+```
+
+2. **Backend Setup**
+```bash
+cd backend
+npm install
+npm start
+# Backend runs on http://localhost:3000
+```
+
+3. **Frontend Setup**
+Open `frontend/index.html` in a browser or use a local server:
+```bash
+# Using Python
+python -m http.server 8000
+
+# Using Node.js (http-server)
+npx http-server frontend
+```
+
+### Docker Deployment
+
+1. **Build and run with Docker Compose**
+```bash
+docker-compose up --build
+```
+
+2. **Access the application**
+- Frontend: http://localhost:8080
+- Backend API: http://localhost:3000
+
+3. **Stop the services**
+```bash
+docker-compose down
+```
+
+## CI/CD Pipeline with Jenkins
+
+### Pipeline Stages
+1. **Checkout** - Pull code from GitHub
+2. **Build Frontend** - Create frontend Docker image
+3. **Build Backend** - Create backend Docker image
+4. **Test Backend** - Run automated tests
+5. **Deploy Microservices** - Deploy containers
+
+### Jenkinsfile Configuration
+The `Jenkinsfile` automates:
+- Building Docker images for both services
+- Running tests
+- Deploying containers
+- Managing microservices orchestration
+
+## API Usage Examples
+
+### Get All Products
+```bash
+curl http://localhost:3000/api/products
+```
+
+### Add to Cart
+```bash
+curl -X POST http://localhost:3000/api/cart \
+  -H "Content-Type: application/json" \
+  -d '{"productId": 1, "quantity": 2}'
+```
+
+### Place Order
+```bash
+curl -X POST http://localhost:3000/api/orders \
+  -H "Content-Type: application/json" \
+  -d '{"email": "customer@example.com", "address": "123 Main St"}'
+```
+
+## Project Structure
+
+```
+techstore/
+├── frontend/
+│   ├── index.html       # Main product catalog
+│   ├── script.js        # Ecommerce logic
+│   ├── style.css        # Responsive styling
+│   └── Dockerfile       # Frontend container
+├── backend/
+│   ├── server.js        # Express API server
+│   ├── package.json     # Dependencies
+│   ├── Dockerfile       # Backend container
+│   └── test_backend.py  # Test suite
+├── docker-compose.yml   # Multi-container config
+├── Jenkinsfile          # CI/CD pipeline
+└── README.md            # Documentation
+```
+
+## Features Walkthrough
+
+### 1. Browse Products
+- View all tech products on the homepage
+- Products are categorized (Electronics, Accessories)
+- Filter by category to narrow down choices
+
+### 2. Add to Cart
+- Select quantity and click "Add to Cart"
+- Cart updates in real-time
+- Multiple items can be added
+
+### 3. View Shopping Cart
+- Click cart button to view items
+- See subtotal, tax (10%), and total
+- Remove items from cart as needed
+
+### 4. Checkout
+- Provide email and shipping address
+- Review order summary
+- Click "Place Order" to confirm
+
+### 5. Order Confirmation
+- See order number and details
+- Confirmation with all purchased items
+- Ready for next purchase
+
+## Deployment Options
+
+### Docker Compose (Local)
+```bash
+docker-compose up --build
+```
+
+### Kubernetes (Production)
+Can be extended to deploy on Kubernetes using:
+- Container images from Docker Hub
+- Kubernetes manifests for services
+- Persistent volumes for data
+
+### Azure/AWS/GCP
+Can be deployed to cloud platforms with:
+- App Services or Container Apps
+- Cloud-managed databases
+- CDN for static assets
+
+## Testing
+
+### Backend Tests
+```bash
+cd backend
+python test_backend.py
+```
+
+### Manual Testing
+1. Open frontend in browser
+2. Add products to cart
+3. Complete checkout process
+4. Verify orders in backend API
+
+## Scaling Considerations
+
+### Horizontal Scaling
+- Frontend: Serve via CDN or load balancer
+- Backend: Multiple instances with load balancer
+- Database: Move to managed database service
+
+### Vertical Scaling
+- Increase container resource limits
+- Optimize code and queries
+- Use caching mechanisms
+
+## Security Enhancements
+
+- Add authentication (JWT/OAuth2)
+- Implement payment gateway (Stripe/PayPal)
+- Add HTTPS/TLS
+- Input validation and sanitization
+- CORS configuration
+
+## Future Enhancements
+
+- [ ] User accounts and login system
+- [ ] Product reviews and ratings
+- [ ] Advanced search and filters
+- [ ] Payment processing integration
+- [ ] Order tracking
+- [ ] Admin dashboard
+- [ ] Email notifications
+- [ ] Database integration (MongoDB/PostgreSQL)
+
+## Contributing
+
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit changes (`git commit -m 'Add AmazingFeature'`)
+4. Push to branch (`git push origin feature/AmazingFeature`)
+5. Open Pull Request
+
+## License
+
+This project is licensed under the ISC License.
+
+## Contact & Support
+
+For questions or support, please open an issue on GitHub or contact the development team.
 
 ---
 
-## Table of Contents
-
-1. [Project Architecture](#project-architecture)
-2. [Tools and Technologies](#tools-and-technologies)
-3. [Setup and Installation](#setup-and-installation)
-   - Installing Jenkins
-   - Installing Docker
-   - Installing Required Jenkins Plugins
-4. [Microservices Structure](#microservices-structure)
-   - Initializing the Git and GitHub Repo
-   - Frontend Service (HTML, CSS, JavaScript)
-   - Backend Service (Node.js)
-   - Finalizing and Pushing Changes to GitHub
-5. [CI/CD Pipeline Implementation](#ci-cd-pipeline-implementation)
-   - Jenkins Configuration
-   - Jenkinsfile Automate Process
-   - Docker Integration
-6. [Testing and Validation](#testing-and-validation)
-   - Automated Testing with Jest (Backend)
-   - Testing in Docker Containers
-7. [Deployment](#deployment)
-   - Dockerized Microservices on Windows
-   - Running the Pipeline in Jenkins
-8. [Project Outcome](#project-outcome)
-9. [Problems and Solution](#problem-solutions)
-
----
-
-## 1. Project Architecture
-
-**Architecture Diagram**
-
-![Screenshot 2024-08-24 185027](https://github.com/user-attachments/assets/79e010c4-070d-466d-af35-765078c1b7b3)
-
-**CI-CD Pipeline**
-
-![image](https://github.com/user-attachments/assets/a1a7711d-de4d-4b4e-a4b5-fa1cfe439a55)
-
-**Deployment on Docker**
-
-![Screenshot 2024-08-23 191148](https://github.com/user-attachments/assets/109d76c0-a33f-4253-89e2-51639c9e0d27)
-
-## 2. Tools and Technologies
-
-For this project, I used the following tools and technologies:
-
-- **Jenkins**: For automating the CI/CD pipeline.
-- **Docker**: For containerizing the application and managing microservices.
-- **Git**: For version control and repository management.
-- **GitHub**: For hosting the source code and Jenkins pipeline.
-- **Node.js**: For the backend microservice.
-- **HTML/CSS/JavaScript**: For the frontend microservice.
-- **Python `unittest`**: For automated testing of the backend microservice.
-
-## 3. Setup and Installation
-
-Follow these steps to set up and install the required tools:
-
-### Installing Jenkins
-
-1. Download Jenkins from the [official Jenkins website](https://www.jenkins.io/download/).
-2. Run the installer and follow the on-screen instructions to complete the installation.
-3. Open Jenkins in your web browser at `http://localhost:8080` and follow the prompts to retrieve the initial admin password.
-
-![image](https://github.com/user-attachments/assets/d72069b7-260f-4b67-a1b6-22a602c675d0)
-
-### Installing Docker
-
-1. Download Docker Desktop from the [Docker website](https://www.docker.com/products/docker-desktop).
-2. Run the installer and follow the instructions to complete the installation.
+**Happy Coding! 🚀** Build and deploy with confidence using TechStore's microservices architecture!
 3. After installation, open Docker Desktop and ensure it's running.
 4. At the end of this document, I have outlined the problems encountered and their possible solutions.
 
