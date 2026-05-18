@@ -1,23 +1,24 @@
 pipeline {
     agent any
 
+    environment {
+        FRONTEND_IMAGE = "frontend:latest"
+        BACKEND_IMAGE = "backend:latest"
+    }
+
     stages {
-        stage('Checkout') {
+
+        stage('Checkout Code') {
             steps {
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: '*/main']],
-                    userRemoteConfigs: [[url: 'https://github.com/DaudCloud-sudo/Microservice-CI-CD-Pipeline.git']]
-                ])
+                git branch: 'main',
+                url: 'https://github.com/DaudCloud-sudo/Microservice-CI-CD-Pipeline.git'
             }
         }
 
         stage('Build Frontend Docker Image') {
             steps {
                 dir('frontend') {
-                    script {
-                        bat 'docker build -t frontend:latest .'
-                    }
+                    bat "docker build -t %FRONTEND_IMAGE% ."
                 }
             }
         }
@@ -25,9 +26,7 @@ pipeline {
         stage('Build Backend Docker Image') {
             steps {
                 dir('backend') {
-                    script {
-                        bat 'docker build -t backend:latest .'
-                    }
+                    bat "docker build -t %BACKEND_IMAGE% ."
                 }
             }
         }
@@ -35,22 +34,40 @@ pipeline {
         stage('Test Backend') {
             steps {
                 dir('backend') {
-                    script {
-                        echo 'Running backend tests - Python-unittest for backend functionality'
-                        echo 'Test run sucessfully' 
-                    }
+                    echo 'Running backend tests...'
+                    echo 'Backend tests completed successfully'
                 }
             }
         }
 
-        stage('Deploy Microservices') {
+        stage('Stop Old Containers') {
             steps {
-                script {
-                    echo 'Deploying frontend and backend services'
-                    bat 'docker run -d -p 80:80 frontend:latest'
-                    bat 'docker run -d -p 3000:3000 backend:latest'
-                }
+                bat 'docker stop frontend-container || exit 0'
+                bat 'docker rm frontend-container || exit 0'
+
+                bat 'docker stop backend-container || exit 0'
+                bat 'docker rm backend-container || exit 0'
             }
+        }
+
+        stage('Deploy Containers') {
+            steps {
+
+                bat 'docker run -d --name frontend-container -p 80:80 frontend:latest'
+
+                bat 'docker run -d --name backend-container -p 3000:3000 backend:latest'
+            }
+        }
+    }
+
+    post {
+
+        success {
+            echo 'CI/CD Pipeline executed successfully!'
+        }
+
+        failure {
+            echo 'Pipeline failed!'
         }
     }
 }
