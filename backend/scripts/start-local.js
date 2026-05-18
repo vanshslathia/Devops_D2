@@ -1,7 +1,8 @@
 /**
- * Frees port 5000 (stops Docker backend if running) then starts the local server.
+ * Prepares environment (free port, optional Docker) then starts server in the same process
+ * so the backend stays running and does not exit when the wrapper ends.
  */
-const { execSync, spawn } = require("child_process");
+const { execSync } = require("child_process");
 const path = require("path");
 
 const PORT = process.env.PORT || 5000;
@@ -11,7 +12,7 @@ function tryStopDockerBackend() {
     execSync("docker stop techstore-backend", { stdio: "pipe" });
     console.log("✓ Stopped Docker container 'techstore-backend' to free port", PORT);
   } catch {
-    // Container not running or Docker unavailable — OK
+    // OK if not running
   }
 }
 
@@ -50,7 +51,7 @@ function tryStartMongoContainer() {
     console.log("✓ Started Docker container 'techstore-mongodb'");
   } catch {
     console.warn(
-      "⚠ Could not start techstore-mongodb. Start Docker Desktop, then run: docker start techstore-mongodb"
+      "⚠ Docker MongoDB not started. Using local MongoDB on port 27017 if available."
     );
   }
 }
@@ -59,11 +60,5 @@ tryStopDockerBackend();
 tryStartMongoContainer();
 freePortOnWindows(PORT);
 
-const serverPath = path.join(__dirname, "..", "server.js");
-const child = spawn(process.execPath, [serverPath], {
-  stdio: "inherit",
-  cwd: path.join(__dirname, ".."),
-  env: process.env,
-});
-
-child.on("exit", (code) => process.exit(code ?? 0));
+// Run server in THIS process (keeps terminal attached, no auto-exit)
+require(path.join(__dirname, "..", "server.js"));

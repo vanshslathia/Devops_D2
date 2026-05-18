@@ -80,14 +80,22 @@ const sampleProducts = [
 ];
 
 async function seedProducts() {
-  const count = await Product.countDocuments();
-  if (count === 0) {
-    await Product.insertMany(sampleProducts);
-    console.log(`✓ Seeded ${sampleProducts.length} sample products`);
+  try {
+    const count = await Product.countDocuments();
+    if (count === 0) {
+      await Product.insertMany(sampleProducts);
+      console.log(`✓ Seeded ${sampleProducts.length} sample products`);
+    }
+  } catch (err) {
+    console.warn("⚠ Could not seed products:", err.message);
   }
 }
 
-const mongoOptions = { useNewUrlParser: true, useUnifiedTopology: true };
+const mongoOptions = {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 5000,
+};
 
 const mongoUris = [
   MONGODB_URI,
@@ -96,30 +104,54 @@ const mongoUris = [
   "mongodb://admin:password123@127.0.0.1:27017/techstore?authSource=admin",
 ].filter(Boolean);
 
+let isConnecting = false;
+
 async function connectMongo() {
+  if (isConnecting) return;
+  isConnecting = true;
+
   const tried = new Set();
   for (const uri of mongoUris) {
     if (tried.has(uri)) continue;
     tried.add(uri);
     try {
+      if (mongoose.connection.readyState === 1) {
+        isConnecting = false;
+        return;
+      }
       if (mongoose.connection.readyState !== 0) {
         await mongoose.disconnect();
       }
       await mongoose.connect(uri, mongoOptions);
       console.log("✓ MongoDB connected");
       await seedProducts();
+      isConnecting = false;
       return;
     } catch (err) {
       const safeUri = uri.replace(/:([^:@/]+)@/, ":****@");
       console.warn(`  MongoDB attempt failed (${safeUri}): ${err.message}`);
     }
   }
-  console.error("✗ Could not connect to MongoDB.");
+
+  isConnecting = false;
+  console.error("✗ Could not connect to MongoDB. API will keep running; retrying in 10s...");
   console.error("  → Start Docker Desktop: docker start techstore-mongodb");
-  console.error("  → Or install/start local MongoDB on port 27017");
+  console.error("  → Or ensure local MongoDB is running on port 27017");
+  setTimeout(connectMongo, 10000);
 }
 
-connectMongo();
+mongoose.connection.on("disconnected", () => {
+  console.warn("⚠ MongoDB disconnected — reconnecting in 5s...");
+  setTimeout(connectMongo, 5000);
+});
+
+mongoose.connection.on("error", (err) => {
+  console.error("MongoDB error:", err.message);
+});
+
+connectMongo().catch((err) => {
+  console.error("MongoDB setup error:", err.message);
+});
 
 // Root route - Welcome message
 app.get("/", (req, res) => {
@@ -255,10 +287,24 @@ server.on("error", (err) => {
   process.exit(1);
 });
 
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received, closing server...');
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught exception (server keeps running):", err);
+});
+
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled rejection (server keeps running):", reason);
+});
+
+process.on("SIGINT", () => {
+  console.log("\nShutting down gracefully...");
   server.close(() => {
-    console.log('Server closed');
-    process.exit(0);
+    mongoose.connection.close(false).finally(() => process.exit(0));
+  });
+});
+
+process.on("SIGTERM", () => {
+  console.log("SIGTERM received, closing server...");
+  server.close(() => {
+    mongoose.connection.close(false).finally(() => process.exit(0));
   });
 });
