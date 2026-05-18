@@ -1,10 +1,21 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './App.css';
-//hello vansh
+
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+const CATEGORY_ICONS = {
+  Electronics: '⚡',
+  Accessories: '🎧',
+  Storage: '💾',
+  default: '📦',
+};
 
 function formatPrice(value) {
   return Number(value).toFixed(2);
+}
+
+function getCategoryIcon(category) {
+  return CATEGORY_ICONS[category] || CATEGORY_ICONS.default;
 }
 
 function App() {
@@ -14,6 +25,9 @@ function App() {
   const [error, setError] = useState(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutMessage, setCheckoutMessage] = useState(null);
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  const [lastOrderId, setLastOrderId] = useState(null);
+  const cartRef = useRef(null);
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
@@ -27,7 +41,10 @@ function App() {
       setProducts(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Error fetching products:', err);
-      setError(err.message || 'Failed to connect to the server. Is the backend running on port 5000?');
+      setError(
+        err.message ||
+          'Cannot reach the server. Start the backend: cd backend && npm start'
+      );
       setProducts([]);
     } finally {
       setLoading(false);
@@ -76,6 +93,10 @@ function App() {
 
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
+  const scrollToCart = () => {
+    cartRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   const handleCheckout = async () => {
     if (cart.length === 0) return;
 
@@ -98,12 +119,19 @@ function App() {
         body: JSON.stringify(order),
       });
 
+      const data = await response.json().catch(() => ({}));
+
       if (!response.ok) {
-        throw new Error('Checkout failed. Please try again.');
+        throw new Error(data.error || data.message || `Checkout failed (${response.status})`);
       }
 
       setCart([]);
-      setCheckoutMessage({ type: 'success', text: 'Order placed successfully!' });
+      setShowCheckoutModal(false);
+      setLastOrderId(data.orderId || data.order?._id);
+      setCheckoutMessage({
+        type: 'success',
+        text: data.message || 'Order placed successfully!',
+      });
     } catch (err) {
       setCheckoutMessage({
         type: 'error',
@@ -114,27 +142,51 @@ function App() {
     }
   };
 
+  const openCheckout = () => {
+    if (cart.length === 0) return;
+    setShowCheckoutModal(true);
+    setCheckoutMessage(null);
+  };
+
   return (
     <div className="App">
+      <div className="bg-gradient" aria-hidden="true" />
+
       <header className="header">
         <div className="container header-inner">
           <div className="header-brand">
-            <h1>🛒 TechStore</h1>
-            <p>MERN Ecommerce Platform</p>
+            <span className="logo-mark">TS</span>
+            <div>
+              <h1>TechStore</h1>
+              <p>Premium tech, delivered fast</p>
+            </div>
           </div>
-          <div className="cart-badge" aria-label={`${cartCount} items in cart`}>
-            <span className="cart-badge-icon">🛍️</span>
-            <span className="cart-badge-count">{cartCount}</span>
-          </div>
+          <button
+            type="button"
+            className="cart-badge"
+            onClick={scrollToCart}
+            aria-label={`${cartCount} items in cart`}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M6 6h15l-1.5 9h-12z" />
+              <circle cx="9" cy="20" r="1" />
+              <circle cx="18" cy="20" r="1" />
+              <path d="M6 6L5 3H2" />
+            </svg>
+            {cartCount > 0 && <span className="cart-badge-count">{cartCount}</span>}
+          </button>
         </div>
       </header>
 
       <main className="container main-content">
         <section className="products-section">
           <div className="section-header">
-            <h2>Products</h2>
+            <div>
+              <h2>Shop</h2>
+              <p className="section-subtitle">Curated gadgets & accessories</p>
+            </div>
             {!loading && !error && (
-              <span className="product-count">{products.length} items</span>
+              <span className="product-count">{products.length} products</span>
             )}
           </div>
 
@@ -148,7 +200,7 @@ function App() {
           {error && (
             <div className="state-message state-error">
               <p>{error}</p>
-              <button type="button" className="btn-retry" onClick={fetchProducts}>
+              <button type="button" className="btn-secondary" onClick={fetchProducts}>
                 Retry
               </button>
             </div>
@@ -164,16 +216,22 @@ function App() {
             <div className="products-grid">
               {products.map((product) => (
                 <article key={product._id} className="product-card">
+                  <div className="product-visual">
+                    <span className="product-emoji">{getCategoryIcon(product.category)}</span>
+                  </div>
                   <div className="product-card-body">
                     <span className="category">{product.category}</span>
                     <h3>{product.name}</h3>
                     <p className="description">{product.description}</p>
                   </div>
                   <div className="product-card-footer">
-                    <p className="price">${formatPrice(product.price)}</p>
+                    <p className="price">
+                      <span className="price-currency">$</span>
+                      {formatPrice(product.price)}
+                    </p>
                     <button
                       type="button"
-                      className="btn-add-cart"
+                      className="btn-primary"
                       onClick={() => addToCart(product)}
                     >
                       Add to Cart
@@ -185,83 +243,93 @@ function App() {
           )}
         </section>
 
-        <aside className="cart-section">
-          <div className="section-header">
-            <h2>Shopping Cart</h2>
-            {cartCount > 0 && (
-              <span className="product-count">{cartCount} items</span>
-            )}
+        <aside className="cart-section" ref={cartRef}>
+          <div className="section-header cart-header">
+            <div>
+              <h2>Your Cart</h2>
+              <p className="section-subtitle">
+                {cartCount > 0 ? `${cartCount} item${cartCount !== 1 ? 's' : ''}` : 'Nothing here yet'}
+              </p>
+            </div>
           </div>
 
           {checkoutMessage && (
-            <p className={`checkout-alert checkout-alert-${checkoutMessage.type}`}>
-              {checkoutMessage.text}
-            </p>
+            <div className={`toast toast-${checkoutMessage.type}`} role="alert">
+              <span className="toast-icon">
+                {checkoutMessage.type === 'success' ? '✓' : '!'}
+              </span>
+              <div>
+                <p>{checkoutMessage.text}</p>
+                {lastOrderId && checkoutMessage.type === 'success' && (
+                  <p className="order-id">Order #{String(lastOrderId).slice(-8).toUpperCase()}</p>
+                )}
+              </div>
+            </div>
           )}
 
           {cart.length === 0 ? (
             <div className="empty-cart">
-              <span className="empty-cart-icon">🛒</span>
+              <div className="empty-cart-visual">🛒</div>
               <p>Your cart is empty</p>
-              <p className="empty-cart-hint">Add products from the list</p>
+              <p className="empty-cart-hint">Browse the shop and add your favorites</p>
             </div>
           ) : (
             <>
               <ul className="cart-items">
                 {cart.map((item) => (
                   <li key={item._id} className="cart-item">
-                    <div className="cart-item-info">
+                    <span className="cart-item-icon">{getCategoryIcon(item.category)}</span>
+                    <div className="cart-item-main">
                       <p className="item-name">{item.name}</p>
-                      <p className="item-price">
-                        ${formatPrice(item.price)} each
-                      </p>
-                    </div>
-                    <div className="cart-item-actions">
-                      <div className="quantity-controls">
-                        <button
-                          type="button"
-                          className="btn-qty"
-                          onClick={() => updateQuantity(item._id, -1)}
-                          aria-label="Decrease quantity"
-                        >
-                          −
-                        </button>
-                        <span className="qty-value">{item.quantity}</span>
-                        <button
-                          type="button"
-                          className="btn-qty"
-                          onClick={() => updateQuantity(item._id, 1)}
-                          aria-label="Increase quantity"
-                        >
-                          +
-                        </button>
+                      <p className="item-price">${formatPrice(item.price)} each</p>
+                      <div className="cart-item-row">
+                        <div className="quantity-controls">
+                          <button
+                            type="button"
+                            className="btn-qty"
+                            onClick={() => updateQuantity(item._id, -1)}
+                            aria-label="Decrease quantity"
+                          >
+                            −
+                          </button>
+                          <span className="qty-value">{item.quantity}</span>
+                          <button
+                            type="button"
+                            className="btn-qty"
+                            onClick={() => updateQuantity(item._id, 1)}
+                            aria-label="Increase quantity"
+                          >
+                            +
+                          </button>
+                        </div>
+                        <span className="item-subtotal">
+                          ${formatPrice(item.price * item.quantity)}
+                        </span>
                       </div>
-                      <p className="item-subtotal">
-                        ${formatPrice(item.price * item.quantity)}
-                      </p>
-                      <button
-                        type="button"
-                        className="btn-remove"
-                        onClick={() => removeFromCart(item._id)}
-                      >
-                        Remove
-                      </button>
                     </div>
+                    <button
+                      type="button"
+                      className="btn-icon-remove"
+                      onClick={() => removeFromCart(item._id)}
+                      aria-label={`Remove ${item.name}`}
+                    >
+                      ×
+                    </button>
                   </li>
                 ))}
               </ul>
-              <div className="cart-total">
+              <div className="cart-summary">
                 <div className="cart-total-row">
-                  <span>Subtotal</span>
+                  <span>Total</span>
                   <strong>${formatPrice(getTotalPrice())}</strong>
                 </div>
                 <button
                   type="button"
                   className="btn-checkout"
-                  onClick={handleCheckout}
+                  onClick={openCheckout}
                   disabled={checkoutLoading}
                 >
-                  {checkoutLoading ? 'Processing...' : 'Checkout'}
+                  Proceed to Checkout
                 </button>
               </div>
             </>
@@ -270,8 +338,76 @@ function App() {
       </main>
 
       <footer className="footer">
-        <p>&copy; 2024 TechStore. All rights reserved.</p>
+        <p>&copy; 2024 TechStore · MERN Ecommerce Platform</p>
       </footer>
+
+      {showCheckoutModal && (
+        <div className="modal-overlay" onClick={() => !checkoutLoading && setShowCheckoutModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-labelledby="checkout-title">
+            <button
+              type="button"
+              className="modal-close"
+              onClick={() => setShowCheckoutModal(false)}
+              disabled={checkoutLoading}
+              aria-label="Close"
+            >
+              ×
+            </button>
+            <h2 id="checkout-title">Confirm Order</h2>
+            <p className="modal-subtitle">Review your items before placing the order</p>
+
+            <ul className="modal-items">
+              {cart.map((item) => (
+                <li key={item._id}>
+                  <span>{item.name} × {item.quantity}</span>
+                  <span>${formatPrice(item.price * item.quantity)}</span>
+                </li>
+              ))}
+            </ul>
+
+            <div className="modal-total">
+              <span>Total due</span>
+              <strong>${formatPrice(getTotalPrice())}</strong>
+            </div>
+
+            {checkoutMessage?.type === 'error' && (
+              <p className="modal-error">{checkoutMessage.text}</p>
+            )}
+
+            <button
+              type="button"
+              className="btn-checkout btn-checkout-confirm"
+              onClick={handleCheckout}
+              disabled={checkoutLoading}
+            >
+              {checkoutLoading ? (
+                <>
+                  <span className="spinner spinner-sm" />
+                  Placing order...
+                </>
+              ) : (
+                'Place Order'
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {checkoutMessage?.type === 'success' && !showCheckoutModal && (
+        <div className="success-overlay" onClick={() => setCheckoutMessage(null)}>
+          <div className="success-card" onClick={(e) => e.stopPropagation()}>
+            <div className="success-check">✓</div>
+            <h3>Thank you!</h3>
+            <p>Your order has been placed.</p>
+            {lastOrderId && (
+              <p className="order-id">Order #{String(lastOrderId).slice(-8).toUpperCase()}</p>
+            )}
+            <button type="button" className="btn-primary" onClick={() => setCheckoutMessage(null)}>
+              Continue Shopping
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

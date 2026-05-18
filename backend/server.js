@@ -87,15 +87,39 @@ async function seedProducts() {
   }
 }
 
-mongoose.connect(MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(async () => {
-  console.log("✓ MongoDB connected");
-  await seedProducts();
-})
-.catch((err) => console.error("✗ MongoDB connection error:", err));
+const mongoOptions = { useNewUrlParser: true, useUnifiedTopology: true };
+
+const mongoUris = [
+  MONGODB_URI,
+  process.env.MONGODB_URI_FALLBACK,
+  "mongodb://127.0.0.1:27017/techstore",
+  "mongodb://admin:password123@127.0.0.1:27017/techstore?authSource=admin",
+].filter(Boolean);
+
+async function connectMongo() {
+  const tried = new Set();
+  for (const uri of mongoUris) {
+    if (tried.has(uri)) continue;
+    tried.add(uri);
+    try {
+      if (mongoose.connection.readyState !== 0) {
+        await mongoose.disconnect();
+      }
+      await mongoose.connect(uri, mongoOptions);
+      console.log("✓ MongoDB connected");
+      await seedProducts();
+      return;
+    } catch (err) {
+      const safeUri = uri.replace(/:([^:@/]+)@/, ":****@");
+      console.warn(`  MongoDB attempt failed (${safeUri}): ${err.message}`);
+    }
+  }
+  console.error("✗ Could not connect to MongoDB.");
+  console.error("  → Start Docker Desktop: docker start techstore-mongodb");
+  console.error("  → Or install/start local MongoDB on port 27017");
+}
+
+connectMongo();
 
 // Root route - Welcome message
 app.get("/", (req, res) => {
@@ -160,14 +184,56 @@ app.get("/api/orders", async (req, res) => {
   }
 });
 
-// POST new order
+// POST new order (checkout)
 app.post("/api/orders", async (req, res) => {
   try {
-    const order = new Order(req.body);
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({
+        error: "Database is not connected. Please ensure MongoDB is running.",
+      });
+    }
+
+    const { items, totalAmount } = req.body;
+
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: "Cart is empty. Add items before checkout." });
+    }
+
+    if (totalAmount == null || Number(totalAmount) < 0) {
+      return res.status(400).json({ error: "Invalid order total." });
+    }
+
+    const orderItems = items.map((item) => ({
+      productId: item.productId,
+      quantity: Number(item.quantity) || 1,
+      price: Number(item.price) || 0,
+    }));
+
+    for (const item of orderItems) {
+      if (!mongoose.Types.ObjectId.isValid(item.productId)) {
+        return res.status(400).json({ error: "Invalid product in cart. Refresh and try again." });
+      }
+      const product = await Product.findById(item.productId);
+      if (!product) {
+        return res.status(400).json({ error: "A product in your cart no longer exists." });
+      }
+    }
+
+    const order = new Order({
+      items: orderItems,
+      totalAmount: Number(totalAmount),
+      status: "confirmed",
+    });
+
     const savedOrder = await order.save();
-    res.status(201).json(savedOrder);
+    res.status(201).json({
+      message: "Order placed successfully",
+      orderId: savedOrder._id,
+      order: savedOrder,
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Checkout error:", error);
+    res.status(500).json({ error: error.message || "Failed to place order" });
   }
 });
 
@@ -177,8 +243,15 @@ const server = app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ API endpoints ready`);
 });
 
-server.on('error', (err) => {
-  console.error('Server error:', err);
+server.on("error", (err) => {
+  if (err.code === "EADDRINUSE") {
+    console.error(`\n✗ Port ${PORT} is already in use.`);
+    console.error("  Another backend is likely running. Try one of these:\n");
+    console.error("  1. Stop Docker backend:  docker stop techstore-backend");
+    console.error("  2. Or use:             npm run start:local\n");
+    process.exit(1);
+  }
+  console.error("Server error:", err);
   process.exit(1);
 });
 

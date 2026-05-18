@@ -1,3 +1,189 @@
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 24px;
+  animation: fadeIn 0.2s ease;
+}
+
+.modal {
+  background: #151b2e;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 32px;
+  max-width: 440px;
+  width: 100%;
+  position: relative;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.3s ease;
+}
+
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: rgba(255, 255, 255, 0.06);
+  color: #94a3b8;
+  border-radius: 10px;
+  font-size: 1.4rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.modal-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f1f5f9;
+}
+
+.modal h2 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.5rem;
+  margin-bottom: 6px;
+}
+
+.modal-subtitle {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  margin-bottom: 24px;
+}
+
+.modal-items {
+  list-style: none;
+  margin-bottom: 20px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.modal-items li {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.9rem;
+  color: #cbd5e1;
+}
+
+.modal-items li span:last-child {
+  color: #a5b4fc;
+  font-weight: 600;
+}
+
+.modal-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  margin-bottom: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 1rem;
+}
+
+.modal-total strong {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.4rem;
+  color: #a5b4fc;
+}
+
+.modal-error {
+  color: #f87171;
+  font-size: 0.85rem;
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  background: rgba(248, 113, 113, 0.1);
+  border-radius: 8px;
+}
+
+.btn-checkout-confirm {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Success overlay */
+.success-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+  padding: 24px;
+  animation: fadeIn 0.25s ease;
+}
+
+.success-card {
+  background: linear-gradient(160deg, #1a2235 0%, #151b2e 100%);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  border-radius: 24px;
+  padding: 48px 40px;
+  text-align: center;
+  max-width: 380px;
+  animation: slideUp 0.35s ease;
+}
+
+.success-check {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 24px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: white;
+  font-weight: 700;
+  box-shadow: 0 12px 40px rgba(16, 185, 129, 0.4);
+}
+
+.success-card h3 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.75rem;
+  margin-bottom: 8px;
+}
+
+.success-card p {
+  color: #94a3b8;
+  margin-bottom: 8px;
+}
+
+.success-card .order-id {
+  margin-bottom: 24px;
+  color: #6ee7b7;
+}
+
+.success-card .btn-primary {
+  width: 100%;
+  padding: 14px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .App {
   min-height: 100vh;
   display: flex;
