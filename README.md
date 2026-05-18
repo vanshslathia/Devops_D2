@@ -1,53 +1,140 @@
-# TechStore - Ecommerce Microservices Platform
+# TechStore - MERN Ecommerce Application
 
-## Project Description
+A simple MERN (MongoDB, Express, React, Node.js) stack ecommerce application with Docker support.
 
-**TechStore** is a fully functional ecommerce platform built with microservices architecture using Node.js backend, HTML/CSS/JavaScript frontend, and deployed with Docker. This project demonstrates modern DevOps practices including containerization, CI/CD pipeline automation with Jenkins, and microservices deployment.
+## Project Structure
+
+```
+Ecommerce_devops/
+├── backend/
+│   ├── server.js           # Express server with MongoDB integration
+│   ├── package.json        # Backend dependencies
+│   ├── Dockerfile          # Backend container configuration
+│   └── .env                # Environment variables
+├── frontend/
+│   ├── public/             # Static assets
+│   │   └── index.html      # React root HTML
+│   ├── src/                # React source code
+│   │   ├── App.js          # Main App component
+│   │   ├── index.js        # React entry point
+│   │   ├── App.css         # Component styles
+│   │   └── index.css       # Global styles
+│   ├── package.json        # Frontend dependencies
+│   ├── Dockerfile          # Frontend container configuration
+│   └── .gitignore
+├── docker-compose.yml      # Docker Compose configuration
+└── README.md               # This file
+```
+
+## Tech Stack
+
+- **Backend**: Node.js + Express.js
+- **Frontend**: React 18
+- **Database**: MongoDB
+- **Containerization**: Docker & Docker Compose
+
+## Prerequisites
+
+- Node.js (v18+)
+- Docker & Docker Compose
+- MongoDB (if running locally without Docker)
+
+## Installation
+
+### Local Development
+
+#### Backend Setup
+```bash
+cd backend
+npm install
+npm start
+```
+Backend will run on `http://localhost:5000`
+
+#### Frontend Setup
+```bash
+cd frontend
+npm install
+npm start
+```
+Frontend will run on `http://localhost:3000`
+
+#### Database Setup (Local MongoDB)
+```bash
+# Assuming MongoDB is installed and running
+# The app will connect to mongodb://localhost:27017/techstore
+```
+
+### Docker Deployment
+
+```bash
+docker-compose up -d
+```
+
+This will start:
+- Frontend on `http://localhost:3000`
+- Backend API on `http://localhost:5000`
+- MongoDB on `mongodb://localhost:27017`
+
+## API Endpoints
+
+### Products
+- `GET /api/products` - Get all products
+- `GET /api/products/:id` - Get single product
+- `POST /api/products` - Create product
+
+### Orders
+- `GET /api/orders` - Get all orders
+- `POST /api/orders` - Create order
+
+### Health
+- `GET /health` - Health check
+- `GET /` - API info
+
+## Environment Variables
+
+### Backend (.env)
+```
+NODE_ENV=development
+PORT=5000
+MONGODB_URI=mongodb://localhost:27017/techstore
+```
+
+### Docker Compose Override
+Uses MongoDB credentials from docker-compose.yml
 
 ## Features
 
-### Frontend
-- 🎨 Modern, responsive product catalog UI
-- 🛒 Shopping cart functionality with add/remove items
-- 🔍 Product filtering by category (Electronics, Accessories)
-- 💳 Checkout process with order summary
-- 📦 Order confirmation with order details
-- 📱 Mobile-responsive design
+- ✅ Browse products
+- ✅ Add products to cart
+- ✅ Remove items from cart
+- ✅ Real-time cart total calculation
+- ✅ Responsive design
+- ✅ MongoDB persistence
+- ✅ RESTful API
+- ✅ Docker containerization
 
-### Backend API
-- **GET /api/products** - Retrieve all products
-- **GET /api/products/:id** - Get single product details
-- **GET /api/cart** - View current cart
-- **POST /api/cart** - Add items to cart
-- **DELETE /api/cart/:productId** - Remove items from cart
-- **POST /api/orders** - Place an order
-- **GET /api/orders** - View all orders
-- **GET /health** - Health check endpoint
+## Development
 
-### Products Catalog
-- Laptop ($999.99)
-- Wireless Mouse ($29.99)
-- USB-C Cable ($14.99)
-- 27" Monitor ($349.99)
-- Mechanical Keyboard ($129.99)
-- HD Webcam ($79.99)
-
-## Project Architecture
-
+### Adding Products
+Send a POST request to `http://localhost:5000/api/products`:
+```json
+{
+  "name": "Product Name",
+  "price": 99.99,
+  "description": "Product description",
+  "category": "Electronics"
+}
 ```
-TechStore (Microservices)
-├── Frontend Service (Port 8080)
-│   ├── HTML/CSS/JavaScript
-│   ├── Product Display
-│   └── Shopping Cart UI
-├── Backend Service (Port 3000)
-│   ├── Node.js/Express API
-│   ├── Product Management
-│   ├── Cart Management
-│   └── Order Processing
-└── DevOps Pipeline
-    ├── Docker Containerization
-    ├── Docker Compose Orchestration
+
+### Stopping Containers
+```bash
+docker-compose down
+```
+
+## License
+
+ISC
     └── Jenkins CI/CD Automation
 ```
 

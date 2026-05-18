@@ -1,120 +1,191 @@
 const express = require("express");
 const cors = require("cors");
-const app = express();
-const PORT = 3000;
+const mongoose = require("mongoose");
+require("dotenv").config();
 
-// Enable CORS and JSON parsing
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Mock Database
-let products = [
-  { id: 1, name: "Laptop", price: 999.99, description: "High-performance laptop", category: "Electronics" },
-  { id: 2, name: "Wireless Mouse", price: 29.99, description: "Ergonomic wireless mouse", category: "Accessories" },
-  { id: 3, name: "USB-C Cable", price: 14.99, description: "Fast charging USB-C cable", category: "Accessories" },
-  { id: 4, name: "Monitor 27inch", price: 349.99, description: "4K UHD Monitor", category: "Electronics" },
-  { id: 5, name: "Mechanical Keyboard", price: 129.99, description: "RGB Mechanical Keyboard", category: "Accessories" },
-  { id: 6, name: "Webcam HD", price: 79.99, description: "1080P HD Webcam", category: "Electronics" }
+// MongoDB Connection
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/techstore";
+
+// Product Schema
+const productSchema = new mongoose.Schema({
+  name: String,
+  price: Number,
+  description: String,
+  category: String,
+  createdAt: { type: Date, default: Date.now }
+});
+
+const Product = mongoose.model("Product", productSchema);
+
+// Order Schema
+const orderSchema = new mongoose.Schema({
+  items: [
+    {
+      productId: mongoose.Schema.Types.ObjectId,
+      quantity: Number,
+      price: Number
+    }
+  ],
+  totalAmount: Number,
+  status: { type: String, default: "pending" },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const Order = mongoose.model("Order", orderSchema);
+
+const sampleProducts = [
+  {
+    name: "Wireless Headphones",
+    price: 79.99,
+    description: "Noise-cancelling over-ear headphones with 30h battery life.",
+    category: "Electronics"
+  },
+  {
+    name: "Mechanical Keyboard",
+    price: 129.99,
+    description: "RGB backlit keyboard with tactile switches for gaming and work.",
+    category: "Accessories"
+  },
+  {
+    name: "USB-C Hub",
+    price: 49.99,
+    description: "7-in-1 adapter with HDMI, USB 3.0, and SD card reader.",
+    category: "Accessories"
+  },
+  {
+    name: "4K Webcam",
+    price: 99.99,
+    description: "Auto-focus webcam with built-in microphone for video calls.",
+    category: "Electronics"
+  },
+  {
+    name: "Portable SSD 1TB",
+    price: 119.99,
+    description: "Fast external storage with USB 3.2 Gen 2 speeds.",
+    category: "Storage"
+  },
+  {
+    name: "Smart Watch",
+    price: 199.99,
+    description: "Fitness tracking, notifications, and heart-rate monitoring.",
+    category: "Electronics"
+  }
 ];
 
-let orders = [];
-let cart = {};
+async function seedProducts() {
+  const count = await Product.countDocuments();
+  if (count === 0) {
+    await Product.insertMany(sampleProducts);
+    console.log(`✓ Seeded ${sampleProducts.length} sample products`);
+  }
+}
+
+mongoose.connect(MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(async () => {
+  console.log("✓ MongoDB connected");
+  await seedProducts();
+})
+.catch((err) => console.error("✗ MongoDB connection error:", err));
 
 // Root route - Welcome message
 app.get("/", (req, res) => {
   res.json({ 
     message: "Welcome to TechStore API",
     version: "2.0",
+    status: "running",
     endpoints: {
       products: "/api/products",
-      cart: "/api/cart",
       orders: "/api/orders",
       health: "/health"
     }
   });
 });
 
+// Health check
+app.get("/health", (req, res) => {
+  res.json({ status: "ok", mongodb: mongoose.connection.readyState === 1 ? "connected" : "disconnected" });
+});
+
 // GET all products
-app.get("/api/products", (req, res) => {
-  res.json(products);
+app.get("/api/products", async (req, res) => {
+  try {
+    const products = await Product.find();
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // GET single product
-app.get("/api/products/:id", (req, res) => {
-  const product = products.find(p => p.id === parseInt(req.params.id));
-  if (!product) {
-    return res.status(404).json({ message: "Product not found" });
+app.get("/api/products/:id", async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+    res.json(product);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
-  res.json(product);
 });
 
-// GET cart
-app.get("/api/cart", (req, res) => {
-  res.json(cart);
-});
-
-// POST add to cart
-app.post("/api/cart", (req, res) => {
-  const { productId, quantity } = req.body;
-  const product = products.find(p => p.id === productId);
-
-  if (!product) {
-    return res.status(404).json({ message: "Product not found" });
+// POST new product
+app.post("/api/products", async (req, res) => {
+  try {
+    const product = new Product(req.body);
+    const savedProduct = await product.save();
+    res.status(201).json(savedProduct);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
-
-  if (cart[productId]) {
-    cart[productId].quantity += quantity;
-  } else {
-    cart[productId] = {
-      ...product,
-      quantity
-    };
-  }
-
-  res.json({ message: "Product added to cart", cart });
-});
-
-// DELETE from cart
-app.delete("/api/cart/:productId", (req, res) => {
-  const { productId } = req.params;
-  delete cart[productId];
-  res.json({ message: "Product removed from cart", cart });
-});
-
-// POST place order
-app.post("/api/orders", (req, res) => {
-  const { email, address } = req.body;
-
-  if (Object.keys(cart).length === 0) {
-    return res.status(400).json({ message: "Cart is empty" });
-  }
-
-  const order = {
-    id: orders.length + 1,
-    items: Object.values(cart),
-    total: Object.values(cart).reduce((sum, item) => sum + (item.price * item.quantity), 0),
-    customer: { email, address },
-    date: new Date().toISOString(),
-    status: "Pending"
-  };
-
-  orders.push(order);
-  cart = {}; // Clear cart after order
-
-  res.json({ message: "Order placed successfully", order });
 });
 
 // GET all orders
-app.get("/api/orders", (req, res) => {
-  res.json(orders);
+app.get("/api/orders", async (req, res) => {
+  try {
+    const orders = await Order.find();
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
-// Health check
-app.get("/health", (req, res) => {
-  res.json({ status: "Ecommerce Backend is running", version: "2.0" });
+// POST new order
+app.post("/api/orders", async (req, res) => {
+  try {
+    const order = new Order(req.body);
+    const savedOrder = await order.save();
+    res.status(201).json(savedOrder);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
-app.listen(PORT, () => {
-  console.log(`🛒 Ecommerce Backend is running at http://localhost:${PORT}`);
-  console.log("✅ API endpoints ready");
+// Start server
+const server = app.listen(PORT, "0.0.0.0", () => {
+  console.log(`🛒 Server running on http://localhost:${PORT}`);
+  console.log(`✅ API endpoints ready`);
+});
+
+server.on('error', (err) => {
+  console.error('Server error:', err);
+  process.exit(1);
+});
+
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, closing server...');
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
 });

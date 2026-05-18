@@ -4,14 +4,17 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
+    "dev": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["ecommerce", "api", "nodejs"],
+  "keywords": ["ecommerce", "api", "nodejs", "mern"],
   "author": "",
   "license": "ISC",
-  "description": "TechStore - Ecommerce Backend API",
+  "description": "TechStore - MERN Ecommerce Backend API",
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "mongoose": "^7.0.0",
+    "dotenv": "^16.0.3"
   }
 }

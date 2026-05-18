@@ -1,20 +1,18 @@
-# Use a lightweight Nginx web server image
-FROM nginx:alpine
+# Build stage
+FROM node:18-alpine as build
+WORKDIR /app
+ARG REACT_APP_API_URL=http://localhost:5000
+ENV REACT_APP_API_URL=$REACT_APP_API_URL
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
 
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Production stage
+FROM node:18-alpine
+WORKDIR /app
+RUN npm install -g serve
+COPY --from=build /app/build ./build
+EXPOSE 3000
+CMD ["serve", "-s", "build", "-l", "3000"]
 
-# Copy all frontend files to the web server directory
-COPY index.html /usr/share/nginx/html/
-COPY script.js /usr/share/nginx/html/
-COPY style.css /usr/share/nginx/html/
-
-# Expose port 80 for the Nginx web server
-EXPOSE 80
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost/ || exit 1
-
-# Run the Nginx web server
-CMD ["nginx", "-g", "daemon off;"]
