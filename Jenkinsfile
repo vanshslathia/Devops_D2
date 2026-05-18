@@ -11,14 +11,14 @@ pipeline {
         stage('Checkout Code') {
             steps {
                 git branch: 'main',
-                url: 'https://github.com/DaudCloud-sudo/Microservice-CI-CD-Pipeline.git'
+                url: 'https://github.com/vanshslathia/Devops_D2.git'
             }
         }
 
         stage('Build Frontend Docker Image') {
             steps {
                 dir('frontend') {
-                    bat "docker build -t %FRONTEND_IMAGE% ."
+                    sh "docker build -t ${FRONTEND_IMAGE} ."
                 }
             }
         }
@@ -26,7 +26,7 @@ pipeline {
         stage('Build Backend Docker Image') {
             steps {
                 dir('backend') {
-                    bat "docker build -t %BACKEND_IMAGE% ."
+                    sh "docker build -t ${BACKEND_IMAGE} ."
                 }
             }
         }
@@ -42,20 +42,21 @@ pipeline {
 
         stage('Stop Old Containers') {
             steps {
-                bat 'docker stop frontend-container || exit 0'
-                bat 'docker rm frontend-container || exit 0'
 
-                bat 'docker stop backend-container || exit 0'
-                bat 'docker rm backend-container || exit 0'
+                sh 'docker stop frontend-container || true'
+                sh 'docker rm frontend-container || true'
+
+                sh 'docker stop backend-container || true'
+                sh 'docker rm backend-container || true'
             }
         }
 
         stage('Deploy Containers') {
             steps {
 
-                bat 'docker run -d --name frontend-container -p 80:80 frontend:latest'
+                sh 'docker run -d --name frontend-container -p 80:80 frontend:latest'
 
-                bat 'docker run -d --name backend-container -p 3000:3000 backend:latest'
+                sh 'docker run -d --name backend-container -p 5000:5000 backend:latest'
             }
         }
     }
