@@ -329,7 +329,7 @@ function App() {
                   onClick={openCheckout}
                   disabled={checkoutLoading}
                 >
-                  Order Checkout
+                  Orders Checkout
                 </button>
               </div>
             </>
